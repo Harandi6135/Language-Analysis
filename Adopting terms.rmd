@@ -1,0 +1,325 @@
+---
+title: "Adopting different terminologies"
+author: "Mabi Harandi"
+date: "6/30/2018"
+output: html_document
+---
+
+``````{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(rjson)
+library(plyr)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(reshape2)
+library(scales)
+library(data.table)
+library(jtools)
+library(sjPlot)
+library(sjmisc)
+
+
+
+
+ #df <- read.csv('3terms_first_month.csv')
+# 
+# 
+ #df_nosciteam <- df[which(!df$user %in% c("mcoughlin","srallen-tester","srallen","crowston","mzevin1","trouille","cjackso3","costerlusyr.edu","Mabi", "parrish","citizenscientist1994","camallen","sciencejedi","jessiemcd", "ejm553","RF45","lcalian","joeykey","isapatane","uber_pye","olipatane","areeda","jafeldt","lmp579","Carsten","Sarah Allen","Mike Zevin","matsoulina","Jrsmith02","sbc538","zooniverse","Jack_Larson","emmabublitz","tlafky","SammiHoar","Pritchet","lucycawte","meredithspalmer","shuebner729", "Jamee64","jmuddappa","tillydad","davidbygott","maricksu", "trouille","jessdewey","AniKarenina","haleyxmoon","schn1007","julesolson","ItsKatniss","Keeganlim1205","Danaerys","mouri010","mineaca","aliburchard")),]
+# 
+# 
+# 
+# # df_nosciteam_M_G <- df_nosciteam[ which( !(df_nosciteam$Project == "gravityspy" & df_nosciteam$Month < 8)) , ]
+# # df_nosciteam_M_G_S <- df_nosciteam_M_G[ which( !(df_nosciteam_M_G$Project == "snapshot" & df_nosciteam_M_G$Month > 17)) , ]
+# # 
+# # 
+# # df_nosciteam_M_G_S$Month[(df_nosciteam_M_G_S$Project == "gravityspy" & df_nosciteam_M_G_S$Month ==8)] <- "1"
+# 
+  #num_days <- ddply(df_nosciteam, c("Project", "user"), summarize,
+             #         Days = length(unique(Date1)))
+  #active_users <- num_days[which(num_days$Days >1),]
+# # 
+  #df_active_users <- df_nosciteam[which(df_nosciteam$user %in% active_users$user),]
+  #write.csv(df_active_users,"df_active_users.csv")
+# #                     
+# # 
+#  df_class <- df_active_users[which(df_active_users$term == "class"),]
+# df_nonclass <- df_active_users[which(df_active_users$term == "nonclass"),]
+
+# 
+#write.csv(df_class, "df_class.csv")
+# 
+# write.csv(df_nonclass, "df_nonclass.csv")
+
+
+
+df_class <- read.csv('df_class.csv')
+df_nonclass <- read.csv('df_nonclass.csv')
+
+df_experienced <- read.csv('experienced_users_Month_G_S.csv')
+df_E_class <- df_experienced[which(df_experienced$term == "class"),]
+df_E_nonclass <- df_experienced[which(df_experienced$term == "nonclass"),]
+
+
+
+```
+
+
+
+The datat of Gravity Spy is collected from 2016-03-09 to 2018-02-10.
+The dataset of Snapshot Serengeti is collected from 2012-12-11 to 2016-02-29.
+
+Linear model for Newcomers and Experienced users over labels and domain terms
+
+#Newcomers-Labels
+
+```{r classterms, echo=FALSE}
+
+
+
+df_class2 <- df_class[which(df_class$total >= 1),]
+#df_class2 <-df_class2[which(df_class2$Month <=23),]
+Normalized_TF_classes <- ddply(df_class2, c("Project", "Month"), summarize,
+                     total_terms = sum(total),
+                     class_Total = sum(count),
+                     Normalized_TF = class_Total/total_terms,
+                     Normalized_TF_Mean = mean(count/total),
+                     Users = length(unique(user)))
+
+
+
+Normalized_TF_classes_summary <- ddply(df_class2, c("Project"), summarize,
+                     Users = length(unique(user)),
+                     Months = length(unique(Month)),
+                     class_Total = sum(count),
+	                   class_Mean = mean(count),
+	                   class_Median = median(count),
+	                   class_SD = sd(count, na.rm = TRUE),
+	                   class_Var = var(count),
+                     total_terms = sum(total),
+                     Normalized_TF = class_Total/total_terms,
+                     Normalized_TF_Mean = mean(class_Total/total_terms),
+	                   Normalized_TF_Median = median(class_Total/total_terms),
+	                   Normalized_TF_SD = sd(class_Total/total_terms, na.rm = TRUE),
+	                   Normalized_TF_Var = var(class_Total/total_terms))
+
+
+Normalized_TF_plot <- ggplot(data=Normalized_TF_classes, aes(x=Month, y=Normalized_TF_Mean, group=Project)) +
+  ggtitle("Distribution of class terms Normalized_TF")+
+  geom_line( color="blue", size=.5)+
+  xlim(1,30) + 
+  facet_grid(facets = Project ~ ., scales="free", margins = FALSE) +  
+  geom_point(color="red", aes(size=Users)) +
+  geom_text(aes(label=Users,hjust=0, vjust=0))
+
+
+#DTs <- Normalized_TF_classes[which(Normalized_TF_classes$Month <=24),]
+summary_interact <- summary(lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_classes, na.action = "na.exclude"))
+plot_s <- lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_classes, na.action = "na.exclude")
+ 
+interactplot <- interact_plot(plot_s, pred = "Month", modx = "Project", main.title ="Normalized_TF of label terms-Newcomers")
+# + theme_apa(legend.pos = "right", legend.use.title = FALSE, x.font.size = 16, y.font.size = 16)
+
+
+
+
+```
+
+
+
+
+```{r classterms.info, include=TRUE, echo=FALSE}
+
+Normalized_TF_classes_summary
+Normalized_TF_plot
+summary_interact
+interactplot
+
+```
+
+#Experienced-Labels
+
+```{r Eclassterms, echo=FALSE}
+
+
+
+df_E_class2 <- df_E_class[which(df_E_class$total >= 1),]
+df_E_class2 <-df_E_class2[which(df_E_class2$Month <=24),]
+Normalized_TF_classes <- ddply(df_E_class2, c("Project", "Month"), summarize,
+                     total_terms = sum(total),
+                     class_Total = sum(count),
+                     Normalized_TF = class_Total/total_terms,
+                     Normalized_TF_Mean = mean(count/total),
+                     Users = length(unique(user)))
+
+
+
+Normalized_TF_classes_summary <- ddply(df_E_class2, c("Project"), summarize,
+                     Users = length(unique(user)),
+                     Months = length(unique(Month)),
+                     class_Total = sum(count),
+	                   class_Mean = mean(count),
+	                   class_Median = median(count),
+	                   class_SD = sd(count, na.rm = TRUE),
+	                   class_Var = var(count),
+                     total_terms = sum(total),
+                     Normalized_TF = class_Total/total_terms,
+                     Normalized_TF_Mean = mean(class_Total/total_terms),
+	                   Normalized_TF_Median = median(class_Total/total_terms),
+	                   Normalized_TF_SD = sd(class_Total/total_terms, na.rm = TRUE),
+	                   Normalized_TF_Var = var(class_Total/total_terms))
+
+
+Normalized_TF_plot <- ggplot(data=Normalized_TF_classes, aes(x=Month, y=Normalized_TF_Mean, group=Project)) +
+  ggtitle("Distribution of class terms Normalized_TF")+
+  geom_line( color="blue", size=.5)+
+  xlim(1,30) + 
+  facet_grid(facets = Project ~ ., scales="free", margins = FALSE) +  
+  geom_point(color="red", aes(size=Users)) +
+  geom_text(aes(label=Users,hjust=0, vjust=0))
+
+
+#DTs <- Normalized_TF_classes[which(Normalized_TF_classes$Month <=24),]
+summary_interact <- summary(lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_classes, na.action = "na.exclude"))
+plot_s <- lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_classes, na.action = "na.exclude")
+ 
+interactplot <- interact_plot(plot_s, pred = "Month", modx = "Project", main.title ="Normalized_TF of label terms-Experienced Users")
+# + theme_apa(legend.pos = "right", legend.use.title = FALSE, x.font.size = 16, y.font.size = 16)
+
+
+
+
+```
+
+```{r Eclassterms.info, include=TRUE, echo=FALSE}
+
+Normalized_TF_classes_summary
+Normalized_TF_plot
+summary_interact
+interactplot
+
+```
+
+In this plot we see the Normalized_TF of domain(non-class) terms that volunteers have used in the first month that they have strated commenting.
+
+#Newcomers-Domain terms
+
+```{r nonclassterms, echo=FALSE}
+
+
+
+df_nonclass2 <- df_nonclass[which(df_nonclass$total >= 1),]
+#df_nonclass2 <-df_nonclass2[which(df_nonclass2$Month <=23),]
+Normalized_TF_nonclasses <- ddply(df_nonclass2, c("Project","Month"), summarize,
+                     total_terms = sum(total),
+                     nonclass_Total = sum(count),
+                     Normalized_TF = nonclass_Total/total_terms,
+                     Normalized_TF_Mean = mean(count/total),
+                     Users = length(unique(user))
+)
+Normalized_TF_nonclasses_summary <- ddply(df_nonclass2, c("Project"), summarize,
+                     Users = length(unique(user)),
+                     Months = length(unique(Month)),
+                     nonclass_Total = sum(count),
+	                   nonclass_Mean = mean(count),
+	                   nonclass_Median = median(count),
+	                   nonclass_SD = sd(count, na.rm = TRUE),
+	                   nonclass_Var = var(count),
+                     total_terms = sum(total),
+                     Normalized_TF = nonclass_Total/total_terms,
+                     Normalized_TF_Mean = mean(nonclass_Total/total_terms),
+	                   Normalized_TF_Median = median(nonclass_Total/total_terms),
+	                   Normalized_TF_SD = sd(nonclass_Total/total_terms, na.rm = TRUE),
+	                   Normalized_TF_Var = var(nonclass_Total/total_terms))
+
+
+Normalized_TF_plot_nonclasses <- ggplot(data=Normalized_TF_nonclasses, aes(x=Month, y=Normalized_TF_Mean, group=Project)) +
+  ggtitle("Distribution of non-class terms Normalized_TF")+
+  geom_line( color="blue", size=.5)+
+  xlim(1,30) + 
+  facet_grid(facets = Project ~ ., scales="free", margins = FALSE) +  
+  geom_point(color="red" , aes(size=Users))+
+  geom_text(aes(label=Users,hjust=0, vjust=0))
+
+
+#DTs <- Normalized_TF_nonclasses[which(Normalized_TF_nonclasses$Month <=24),]
+summary_interact_nonclasses <- summary(lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_nonclasses, na.action = "na.exclude"))
+plot_ns <- lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_nonclasses, na.action = "na.exclude")
+interactplot_nonclasses <- interact_plot(plot_ns, pred = "Month", modx = "Project", main.title ="Normalized_TF of popular domain terms-Newcomers") # + theme_apa(legend.pos = "right", legend.use.title = FALSE, x.font.size = 16, y.font.size = 16)
+
+```
+
+
+
+```{r nonclassterms.info, include=TRUE, echo=FALSE}
+
+Normalized_TF_nonclasses_summary
+Normalized_TF_plot_nonclasses
+summary_interact_nonclasses
+interactplot_nonclasses
+```
+
+
+#Experienced-Domain terms
+```{r Enonclassterms, echo=FALSE}
+
+
+
+df_E_nonclass2 <- df_E_nonclass[which(df_E_nonclass$total >= 1),]
+df_E_nonclass2 <-df_E_nonclass2[which(df_E_nonclass2$Month <=24),]
+Normalized_TF_nonclasses <- ddply(df_E_nonclass2, c("Project","Month"), summarize,
+                     total_terms = sum(total),
+                     nonclass_Total = sum(count),
+                     Normalized_TF = nonclass_Total/total_terms,
+                     Normalized_TF_Mean = mean(count/total),
+                     Users = length(unique(user))
+)
+Normalized_TF_nonclasses_summary <- ddply(df_E_nonclass2, c("Project"), summarize,
+                     Users = length(unique(user)),
+                     Months = length(unique(Month)),
+                     nonclass_Total = sum(count),
+	                   nonclass_Mean = mean(count),
+	                   nonclass_Median = median(count),
+	                   nonclass_SD = sd(count, na.rm = TRUE),
+	                   nonclass_Var = var(count),
+                     total_terms = sum(total),
+                     Normalized_TF = nonclass_Total/total_terms,
+                     Normalized_TF_Mean = mean(nonclass_Total/total_terms),
+	                   Normalized_TF_Median = median(nonclass_Total/total_terms),
+	                   Normalized_TF_SD = sd(nonclass_Total/total_terms, na.rm = TRUE),
+	                   Normalized_TF_Var = var(nonclass_Total/total_terms))
+
+
+Normalized_TF_plot_nonclasses <- ggplot(data=Normalized_TF_nonclasses, aes(x=Month, y=Normalized_TF_Mean, group=Project)) +
+  ggtitle("Distribution of non-class terms Normalized_TF")+
+  geom_line( color="blue", size=.5)+
+  xlim(1,30) + 
+  facet_grid(facets = Project ~ ., scales="free", margins = FALSE) +  
+  geom_point(color="red" , aes(size=Users))+
+  geom_text(aes(label=Users,hjust=0, vjust=0))
+
+
+#DTs <- Normalized_TF_nonclasses[which(Normalized_TF_nonclasses$Month <=24),]
+summary_interact_nonclasses <- summary(lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_nonclasses, na.action = "na.exclude"))
+plot_ns <- lm(Normalized_TF ~ Month + Project + Month*Project , data = Normalized_TF_nonclasses, na.action = "na.exclude")
+interactplot_nonclasses <- interact_plot(plot_ns, pred = "Month", modx = "Project", main.title ="Normalized_TF of popular domain terms-Experienced") # + theme_apa(legend.pos = "right", legend.use.title = FALSE, x.font.size = 16, y.font.size = 16)
+
+```
+
+
+
+```{r Enonclassterms.info, include=TRUE, echo=FALSE}
+
+Normalized_TF_nonclasses_summary
+Normalized_TF_plot_nonclasses
+summary_interact_nonclasses
+interactplot_nonclasses
+```
+
+
+
+
+
