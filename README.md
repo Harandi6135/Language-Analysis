@@ -4,4 +4,4 @@ the file Adopting_term.rmd is about analysis of interaction relationship between
 
 the file comments_preprocessing.py is preparing comments to verctos of terms
 
-the file week_creation creates week for the analysis
+the file week_creation.py creates week for the analysis
