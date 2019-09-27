@@ -28,7 +28,7 @@ library(sjmisc)
  #df <- read.csv('3terms_first_month.csv')
 # 
 # 
- #df_nosciteam <- df[which(!df$user %in% c("mcoughlin","srallen-tester","srallen","crowston","mzevin1","trouille","cjackso3","costerlusyr.edu","Mabi", "parrish","citizenscientist1994","camallen","sciencejedi","jessiemcd", "ejm553","RF45","lcalian","joeykey","isapatane","uber_pye","olipatane","areeda","jafeldt","lmp579","Carsten","Sarah Allen","Mike Zevin","matsoulina","Jrsmith02","sbc538","zooniverse","Jack_Larson","emmabublitz","tlafky","SammiHoar","Pritchet","lucycawte","meredithspalmer","shuebner729", "Jamee64","jmuddappa","tillydad","davidbygott","maricksu", "trouille","jessdewey","AniKarenina","haleyxmoon","schn1007","julesolson","ItsKatniss","Keeganlim1205","Danaerys","mouri010","mineaca","aliburchard")),]
+ #### not shared on Github
 # 
 # 
 # 
